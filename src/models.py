@@ -1,14 +1,14 @@
 from flask_sqlalchemy import SQLAlchemy
-from enum import Enum
+# from enum import Enumb
 
 db = SQLAlchemy()
 
-user_favorites = db.Table(
-    'user_favorites',
-    db.Column('user_id', ForeignKey='user.id'),
-    db.Column('planet_id', ForeignKey='planet.id'),
-    db.Column('character_id', ForeignKey='character.id')
-)
+# user_favorites = db.Table(
+#     'user_favorites',
+#     db.Column('user_id', ForeignKey='user.id'),
+#     db.Column('planet_id', ForeignKey='planet.id'),
+#     db.Column('character_id', ForeignKey='character.id')
+# )
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -18,9 +18,9 @@ class User(db.Model):
     password = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(40), nullable=False)
 
-    favorites = db.relationship('Favorites', secondary=user_favorites, back_populates='user')
+    favorites = db.relationship('Favorites', back_populates='user')
 
-    def serialize_user(self):
+    def serialize(self):
         return {
         'name': self.name,
         'last_name': self.last_name,
@@ -28,8 +28,8 @@ class User(db.Model):
         }
 
 
-class Character(db.Model):
-    __tablename__ = 'character'
+class People(db.Model):
+    __tablename__ = 'people'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), nullable=False)
     birth_year = db.Column(db.String(20))
@@ -38,11 +38,9 @@ class Character(db.Model):
     skin_color = db.Column(db.String(20))
     eye_color = db.Column(db.String(20))
 
-    favorites = db.relationship('Favorites', secondary=user_favorites, back_populates='user')
+    favorites = db.relationship('Favorites', back_populates='people')
 
-
-    def serialize_character(self):
-        print(self.name)
+    def serialize(self):
         return({
             "name": self.name,
             'birth_year': self.birth_year,
@@ -62,9 +60,9 @@ class Planet(db.Model):
     rotation_period = db.Column(db.Integer)
     diameter = db.Column(db.Integer)
 
-    favorites = db.relationship('Favorites', secondary=user_favorites, back_populates='user')
+    favorites = db.relationship('Favorites', back_populates='planet')
 
-    def serialize_planet(self):
+    def serialize(self):
         return ({
             "name": self.name,
             'climate': self.climate,
@@ -74,23 +72,28 @@ class Planet(db.Model):
             'diameter': self.diameter
         })
     
-class Nature(Enum):
-    CHARACTER = 'character'
-    PLANET = 'planet'
+# class Nature(Enum):
+#     CHARACTER = 'character'
+#     PLANET = 'planet'
 
 class Favorites(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
-    nature = db.Column(db.Enum(Nature), nullable=False)
-    nature_id = db.Column(db.Integer, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # nature = db.Column(db.Enum(Nature), nullable=False)
+    people_id = db.Column(db.Integer, db.ForeignKey('people.id'), nullable=True)
+    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
 
     user = db.relationship('User', back_populates='favorites')
-    character = db.relationship('Character', back_populates='favorites')
-    # planet = db.relationship('Planet', back_populates='favorites')
+    people = db.relationship('People', back_populates='favorites')
+    planet = db.relationship('Planet', back_populates='favorites')
 
-    def serialize_favorite(self):
+    def serialize(self):
         return ({
-        'character_id': self.character_id,
-        'planet_id': self.planet_id
+        'id': self.id,
+        'planet_id': self.planet_id,
+        'people_id': self.people_id,
+        'user_id': self.user_id
+        # 'nature': self.nature.value
         })
